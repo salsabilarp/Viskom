@@ -9,11 +9,16 @@ if not capture.isOpened():
 subsMog2 = cv.createBackgroundSubtractorMOG2()
 subsKNN = cv.createBackgroundSubtractorKNN()
 i = 0
-while (capture.isOpened()):
+while capture.isOpened():
     re, frame = capture.read()
     scale = 20
+
+    if isinstance(frame, type(None)):
+        break
+
     width = int(frame.shape[1] * scale / 100)
     height = int(frame.shape[0] * scale / 100)
+
     dim = (width, height)
     image = cv.resize(frame,dim, cv.INTER_AREA)
     gaussian = np.array([
@@ -24,25 +29,20 @@ while (capture.isOpened()):
         [1.0, 4.0, 7.0, 4.0, 1.0]
     ])/273
     image = cv.filter2D(image,-1,gaussian)
-    if (i==0):
+    if i == 0:
         frame1 = image
         grayscaleframe1 = cv.cvtColor(frame1, cv.COLOR_RGBA2GRAY)
         i = i+1
 
-    #absolute difference
     grayscaleframe = cv.cvtColor(image, cv.COLOR_RGBA2GRAY)
     framedelta = cv.absdiff(grayscaleframe1,grayscaleframe)
     _, bgs = cv.threshold(framedelta, 50, 255, cv.THRESH_BINARY)
-
     kernel = cv.getStructuringElement(cv.MORPH_RECT, (7,7))
     morphImage = bgs
     for i in range(1,3):
         morphImage = cv.morphologyEx(morphImage, cv.MORPH_CLOSE, kernel)
     morphImage = cv.morphologyEx(morphImage, cv.MORPH_DILATE, kernel)
-    #MOG2
     blobMog = subsMog2.apply(image)
-
-    #KNN
     blobKNN = subsKNN.apply(image)
 
     cv.imshow("image asli",image)
@@ -54,3 +54,4 @@ while (capture.isOpened()):
     if keyword=='q' or keyword==27:
         break
 cv.destroyAllWindows()
+exit(0)
